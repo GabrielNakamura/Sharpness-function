@@ -3,6 +3,7 @@ Function to test the significance of partitions in cluster analysis of sampling 
 
 #arguments
 inputs:
+
 x= a matrix object with sampling units in rows and descriptors in columns;
 
 k= a scalar. Value greater than 1 indicating the number of groups to be tested regarding the significance;
@@ -12,4 +13,5 @@ method= character, indicating which measure will be applied in x to calculate th
 iterations= scalar, indicating the number of bootstrap iterations used in the procedure to calculate the significance. Default is 999.
 
 output:
+
 matrix with five columns containing the values of mean observed statistic, mean null statistic, their respectives standard deviation and the p value associated with the observed statistic.
