@@ -2,6 +2,7 @@
 Function to test the significance of partitions in cluster analysis of sampling units. The method is described in [Pillar, 1999](https://esajournals.onlinelibrary.wiley.com/doi/pdf/10.1890/0012-9658%281999%29080%5B2508%3AHSAC%5D2.0.CO%3B2).
 
 #arguments
+
 inputs:
 
 x= a matrix object with sampling units in rows and descriptors in columns;
