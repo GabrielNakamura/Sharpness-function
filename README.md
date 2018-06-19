@@ -13,6 +13,8 @@ method= character, indicating which measure will be applied in x to calculate th
 
 iterations= scalar, indicating the number of bootstrap iterations used in the procedure to calculate the significance. Default is 999.
 
+method.group= character, indicating the agglomeration method to be used in hierarchical clustering. Can be one of the methods available in  [hclust](http://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html) function. Default is "complete.
+
 output:
 
-matrix with five columns containing the values of mean observed statistic, mean null statistic, their respectives standard deviation and the p value associated with the observed statistic.
+matrix with five columns containing the values of mean observed statistic (mean_Gobs), mean null statistic (mean_G0), their respectives standard deviation (sd_Gobs and sd_G0) and the p value associated with the observed statistic (p.value).
