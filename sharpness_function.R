@@ -2,7 +2,7 @@
 #function to calculate sharpness of groups based on method developed by Pillar, 1999 Ecology
 ###############################################################################################
 
-sharpness<- function(x,k,method= "euclidean",iterations= 999){
+sharpness<- function(x,k,method= "euclidean",iterations= 999, method.group= "complete"){
   if(!is.matrix(x)){
     stop("x must be a matrix object")
   }
@@ -12,12 +12,12 @@ sharpness<- function(x,k,method= "euclidean",iterations= 999){
   #step 2
   dist_mat<-vegan::vegdist(x,method=method)^2
   #step 3
-  ref_partition<-cutree(hclust(d = dist_mat), k = k) #reference partition
+  ref_partition<-cutree(hclust(d = dist_mat,method = method.group), k = k) #reference partition
   
   prob<- numeric(length=iterations) #object to receive the results of bootstrap procedure
   G_obsAll<- numeric(length=iterations) #object to receive all Gobs in boots procedure
   null_G_All<-numeric(length=iterations) #object to receive all G0
-  for(j in 1:iterations){ #inicio da iteração do bootstrap
+  for(j in 1:iterations){ #inicio da iteraÃ§Ã£o do bootstrap
     #step 4 bootstrap sample
     boot_samp<-x[sample(1:nrow(x),nrow(x), 
                                   replace = T),] #bootstrap sample
@@ -25,7 +25,7 @@ sharpness<- function(x,k,method= "euclidean",iterations= 999){
     #step 5
     joint_dist<-as.matrix(vegan::vegdist(rbind(x,boot_samp),method = method)^2)
     #step 6
-    boot_partition<-cutree(hclust(d = (vegan::vegdist(boot_samp,method = method)^2)), k = k) 
+    boot_partition<-cutree(hclust(d = (vegan::vegdist(boot_samp,method = method)^2),method = method.group), k = k) 
     #i=2
     levels_boot<-(k+1):(k+k)
     for (i in 1:length(levels(as.factor(boot_partition)))){ #generalization to substitute the names of groups in ref by other names in boot partition
