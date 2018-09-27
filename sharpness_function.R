@@ -13,7 +13,6 @@ sharpness<- function(x,k,method= "euclidean",iterations= 999, method.group= "com
   dist_mat<-vegan::vegdist(x,method=method)^2
   #step 3
   ref_partition<-cutree(hclust(d = dist_mat,method = method.group), k = k) #reference partition
-  
   prob<- numeric(length=iterations) #object to receive the results of bootstrap procedure
   G_obsAll<- numeric(length=iterations) #object to receive all Gobs in boots procedure
   null_G_All<-numeric(length=iterations) #object to receive all G0
@@ -26,7 +25,6 @@ sharpness<- function(x,k,method= "euclidean",iterations= 999, method.group= "com
     joint_dist<-as.matrix(vegan::vegdist(rbind(x,boot_samp),method = method)^2)
     #step 6
     boot_partition<-cutree(hclust(d = (vegan::vegdist(boot_samp,method = method)^2),method = method.group), k = k) 
-    #i=2
     levels_boot<-(k+1):(k+k)
     for (i in 1:length(levels(as.factor(boot_partition)))){ #generalization to substitute the names of groups in ref by other names in boot partition
       boot_partition<-gsub(pattern = i,replacement = levels_boot[i],x = boot_partition)
@@ -36,29 +34,28 @@ sharpness<- function(x,k,method= "euclidean",iterations= 999, method.group= "com
     int_groups<-interaction(levels(as.factor(ref_partition)), #possible interactions among groups of boots and ref sample
                             levels(as.factor(boot_partition)),sep = ":") 
     matrix_Q<-matrix(NA,nrow = length(levels(as.factor(ref_partition))), ncol = length(levels(as.factor(boot_partition))), 
-                     dimnames= list(paste("group",levels(as.factor(ref_partition)),sep=""),paste("group",levels(as.factor(boot_partition)),sep="")),byrow=FALSE) #matrix to receive the values of contrasts 
+                     dimnames= list(paste("group",levels(as.factor(ref_partition)),sep=""),paste("group",levels(as.factor(boot_partition)),sep="")),byrow=FALSE) #matrix to receive the values of contrasts               
     for(i in 1:length(levels(int_groups))){ #iterate among the groups in ref and boots sample to calculate matrix of contrasts - matrix Q
-      line<- c(names(which(ref_partition==substr(levels(int_groups)[i],start = 1,stop = 1))),names(which(boot_partition==substr(levels(int_groups)[i],start = 3,stop = 3))))
-      column<-c(names(which(ref_partition==substr(levels(int_groups)[i],start = 1,stop = 1))),names(which(boot_partition==substr(levels(int_groups)[i],start = 3,stop = 3))))
+      line<- c(names(which(ref_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][1])),names(which(boot_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][2])))
+      column<-c(names(which(ref_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][1])),names(which(boot_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][2])))
       matrix_Tj<-as.matrix(joint_dist[line,column]) #matrix of contrasts
       matrix_Tj<-ifelse(lower.tri(matrix_Tj,diag = T)==TRUE,matrix_Tj,0)
       rownames(matrix_Tj)<- line
       colnames(matrix_Tj)<- column
-      matrix_Wr<- as.matrix(joint_dist[names(which(ref_partition==substr(levels(int_groups)[i],start = 1,stop = 1))),
-                                       names(which(ref_partition==substr(levels(int_groups)[i],start = 1,stop = 1)))])
+      matrix_Wr<- as.matrix(joint_dist[names(which(ref_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][1])), names(which(ref_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][1]))])
       matrix_Wr<-ifelse(lower.tri(matrix_Wr,diag = T)==TRUE,matrix_Wr,0) #matrix of within group variation in reeference sample
-      rownames(matrix_Wr)<- names(which(ref_partition==substr(levels(int_groups)[i],start = 1,stop = 1)))
-      colnames(matrix_Wr)<- names(which(ref_partition==substr(levels(int_groups)[i],start = 1,stop = 1)))
-      matrix_Wb<- as.matrix(joint_dist[names(which(boot_partition==substr(levels(int_groups)[i],start = 3,stop = 3))),
-                                       names(which(boot_partition==substr(levels(int_groups)[i],start = 3,stop = 3)))])
+      rownames(matrix_Wr)<- names(which(ref_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][1]))
+      colnames(matrix_Wr)<- names(which(ref_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][1]))
+      matrix_Wb<- as.matrix(joint_dist[names(which(boot_partition==      strsplit(levels(int_groups)[i],"\\:")[[1]][2])),
+                                       names(which(boot_partition==      strsplit(levels(int_groups)[i],"\\:")[[1]][2]))]) 
       matrix_Wb<-ifelse(lower.tri(matrix_Wb,diag = T)==TRUE,matrix_Wb,0) #matrix of within group variation in bootstrap sample
-      rownames(matrix_Wb)<- names(which(boot_partition==substr(levels(int_groups)[i],start = 3,stop = 3)))
-      colnames(matrix_Wb)<- names(which(boot_partition==substr(levels(int_groups)[i],start = 3,stop = 3)))
+      rownames(matrix_Wb)<- names(which(boot_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][2]))
+      colnames(matrix_Wb)<- names(which(boot_partition==strsplit(levels(int_groups)[i],"\\:")[[1]][2]))
       Tj<- sum(matrix_Tj)/nrow(matrix_Tj) #calculation of the sum of boots sample and refs sample- Tj quantity in Pillar
       Wr<- sum(matrix_Wr)/nrow(matrix_Wr)
       Wb<- sum(matrix_Wb)/nrow(matrix_Wb)
-      matrix_Q[which(paste("group",as.numeric(substr(levels(int_groups)[i],start = 1,stop = 1)),sep="")==rownames(matrix_Q)),
-               which(paste("group",as.numeric(substr(levels(int_groups)[i],start = 3,stop = 3)),sep="")==colnames(matrix_Q))]<- (Tj - (Wb + Wr)) #matrix containing all values of contrasts
+      matrix_Q[which(paste("group",as.numeric(strsplit(levels(int_groups)[i],"\\:")[[1]][1]),sep="")==rownames(matrix_Q)),
+               which(paste("group",as.numeric(strsplit(levels(int_groups)[i],"\\:")[[1]][2]),sep="")==colnames(matrix_Q))]<- (Tj - (Wb + Wr)) #matrix containing all values of contrasts
     }
     
     #obtaining S and T  total
@@ -71,19 +68,18 @@ sharpness<- function(x,k,method= "euclidean",iterations= 999, method.group= "com
     #calculating G0
     null_int_groups<-numeric(length=nrow(matrix_Q.min))
     for(i in 1:ncol(matrix_Q.min)){
-      null_int_groups[i]<- paste(substr(rownames(matrix_Q.min)[i],start = 6,stop = 6),
-                                 substr(colnames(matrix_Q.min)[i],start = 6,stop = 6),sep=":")  
+      null_int_groups[i]<- paste(strsplit(rownames(matrix_Q.min)[i],"\\p")[[1]][2],
+                                 strsplit(colnames(matrix_Q.min)[i],"\\p")[[1]][2],sep=":")  
     }
     null_int_groups<-as.factor(null_int_groups) #interaction groups for null bootstrap 
     null_Tj_list<-vector(mode = "list",length=length(null_int_groups)) #object to receive null Tj for each interaction
     null_contrast<- numeric(length = length(null_int_groups))
     names(null_contrast)<- null_int_groups
     null_Tj_list<-vector(mode = "list",length=length(null_int_groups))
-    
     for(i in 1:length(null_int_groups)){ #iterate among the groups in ref and boots sample to calculate matrix of contrasts - matrix Q
-      n_boot<-length(which(boot_partition==substr(null_int_groups[i],start = 3,stop = 3))) #number of elements in boot group
-      null_boot<-sample(names(which(ref_partition==substr(levels(null_int_groups)[i],start = 1,stop = 1))),size = n_boot,replace = T) #null bootstrap sample in nearest reference group
-      ref<- names(which(ref_partition==substr(levels(null_int_groups)[i],start = 1,stop = 1)))
+      n_boot<-length(which(boot_partition==strsplit(levels(null_int_groups)[i],"\\:")[[1]][2])) #number of elements in boot group
+      null_boot<-sample(names(which(ref_partition==strsplit(levels(null_int_groups)[i],"\\:")[[1]][1])),size = n_boot,replace = T) #null bootstrap sample in nearest reference group
+      ref<- names(which(ref_partition==strsplit(levels(null_int_groups)[i],"\\:")[[1]][1]))
       null_lineCol<- c(null_boot,ref)
       null_Tj_list[[i]]<- null_boot
       null_matrix_Tj<-as.matrix(joint_dist[null_lineCol,null_lineCol]) #matrix of contrasts between boots and nearest sample in ref 
@@ -125,10 +121,10 @@ sharpness<- function(x,k,method= "euclidean",iterations= 999, method.group= "com
 }
 
 #example
-run.example= FALSE
-if(run.example==TRUE){
+run.example= TRUE
+if(run.example==FALSE){
   matrix_test<- matrix(c(17,14,27,21,16,5,9,8,5,0,5,8,0,0,10),nrow=5, ncol=3,
                        dimnames= list(paste("comm",1:5, sep=""),
                                       paste("var",1:3, sep="")))
-  resul_Ex<-sharpness(x = matrix_test,k = 2, method = "euclidean",iterations = 10000)
+  resul_Ex<-sharpness(x = matrix_test,k = 2, method = "euclidean",iterations = 1000)
 }
